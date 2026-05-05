@@ -22,19 +22,17 @@ public class InventorySlot : MonoBehaviour
 
     public void OnSlotClick()
     {
-        if (item != null)
+        if (item == null) return;
+
+        // Вместо поиска EquipmentManager напрямую, вызываем InventoryManager
+        if (InventoryManager.Instance != null)
         {
-            if (isEquipmentSlot) // Добавь такую переменную-галочку в скрипт
-            {
-                // Логика снятия: очищаем слот
-                SetItem(null); 
-                Debug.Log("Предмет снят");
-            }
-            else
-            {
-                // Логика надевания
-                InventoryManager.Instance.EquipItem(item);
-            }
+            InventoryManager.Instance.EquipItem(item);
+            Debug.Log($"[InventorySlot] Клик по предмету: {item.itemName}");
+        }
+        else
+        {
+            Debug.LogError("InventoryManager.Instance не найден!");
         }
     }
 }

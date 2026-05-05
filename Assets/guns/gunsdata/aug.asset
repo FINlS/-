@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4936c16d9b47d204f96e8557413dc143, type: 3}
   m_Name: aug
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: 
+  itemName: AUG
   description: 
-  icon: {fileID: 0}
-  itemPrefab: {fileID: 7162115220015556419, guid: 5cd5624f732894541873b1b02161b5da, type: 3}
-  type: 1
+  icon: {fileID: 21300000, guid: f313428bffd275a4ab59117cec974463, type: 3}
+  itemPrefab: {fileID: 9216416182242140708, guid: ae62e722a630bb644960ae80767023ac, type: 3}
+  type: 2
   power: 0

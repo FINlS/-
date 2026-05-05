@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4936c16d9b47d204f96e8557413dc143, type: 3}
-  m_Name: ak47
+  m_Name: M4A4
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Ak 477
+  itemName: M4A4
   description: 
-  icon: {fileID: 21300000, guid: fbb20ec84469a0742b7b8dc7611de19d, type: 3}
-  itemPrefab: {fileID: 8194110014852702467, guid: 66d9a2228bd399a42ae8dcddfaf6c83b, type: 3}
+  icon: {fileID: -255926322, guid: 03dea84bde355bb44a69aa52066a7d2f, type: 3}
+  itemPrefab: {fileID: 2213359597887385404, guid: 29c643106a40cc148b2f78791594cb89, type: 3}
   type: 2
   power: 0

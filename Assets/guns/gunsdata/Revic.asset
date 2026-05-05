@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4936c16d9b47d204f96e8557413dc143, type: 3}
-  m_Name: ak47
+  m_Name: Revic
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Ak 477
+  itemName: Revic
   description: 
-  icon: {fileID: 21300000, guid: fbb20ec84469a0742b7b8dc7611de19d, type: 3}
-  itemPrefab: {fileID: 8194110014852702467, guid: 66d9a2228bd399a42ae8dcddfaf6c83b, type: 3}
+  icon: {fileID: -1586029802, guid: 89d8c0c60cc1d46499f4b02b3c0a6ed7, type: 3}
+  itemPrefab: {fileID: 5156850181412221590, guid: 2f3a787582c7c774ea345e6a7542784f, type: 3}
   type: 2
   power: 0
