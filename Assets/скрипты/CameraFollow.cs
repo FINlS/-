@@ -48,29 +48,9 @@ public class CameraFollow : MonoBehaviour
             currentTargetPos.z = desiredPos.z + (diffZ > 0 ? deadzoneSize.y : -deadzoneSize.y);
         }
 
-        // 3. ПРИНУДИТЕЛЬНОЕ ОГРАНИЧЕНИЕ (Clamp)
-        // Теперь камера физически не сможет захотеть точку за пределами min/max
-        currentTargetPos.x = Mathf.Clamp(currentTargetPos.x, minX, maxX);
-        currentTargetPos.z = Mathf.Clamp(currentTargetPos.z, minZ, maxZ);
-        currentTargetPos.y = desiredPos.y; // Высота всегда фиксирована из offset
+
 
         // 4. Плавное движение к ограниченной точке
         transform.position = Vector3.Lerp(transform.position, currentTargetPos, Time.deltaTime * smoothSpeed);
-    }
-
-    void OnDrawGizmos()
-    {
-        // Синяя рамка - границы мира
-        Gizmos.color = Color.blue;
-        Vector3 mapCenter = new Vector3((minX + maxX) / 2f, 0, (minZ + maxZ) / 2f);
-        Vector3 mapSize = new Vector3(maxX - minX, 1f, maxZ - minZ);
-        Gizmos.DrawWireCube(mapCenter, mapSize);
-
-        if (target != null)
-        {
-            // Красная рамка - мертвая зона вокруг игрока
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireCube(target.position, new Vector3(deadzoneSize.x * 2, 0.5f, deadzoneSize.y * 2));
-        }
     }
 }
