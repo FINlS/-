@@ -1,54 +1,41 @@
 using UnityEngine;
-using TMPro; // Не забудь добавить этот неймспейс, если используешь TextMeshPro
+using TMPro;
 
 public class AltarActivation : MonoBehaviour
 {
-    [Header("Настройки Босса")]
+    [Header("Префабы")]
     public GameObject bossPrefab;    
-    public Transform spawnPoint;     
+    public GameObject arenaPrefab;   // Перетащи сюда ПРЕФАБ красных линий из папки Project
+
+    [Header("Точки появления")]
+    public Transform bossSpawnPoint; // Точка внутри или рядом с алтарем
     
     [Header("Настройки Взаимодействия")]
     public float interactionDistance = 3f; 
-    public GameObject interactionUI; // Перетащи сюда объект с текстом "Нажми E"
+    public GameObject interactionUI; 
     
     private bool isActivated = false;
     private Transform player;
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null) player = playerObj.transform;
         
-        // Скрываем надпись при старте
-        if (interactionUI != null)
-            interactionUI.SetActive(false);
+        if (interactionUI != null) interactionUI.SetActive(false);
     }
 
     void Update()
     {
-        if (isActivated) 
-        {
-            // Если алтарь уже нажат, надпись больше не нужна
-            if (interactionUI != null && interactionUI.activeSelf)
-                interactionUI.SetActive(false);
-            return;
-        }
+        if (isActivated || player == null) return;
 
-        float distance = Vector3.Distance(player.position, transform.position);
-
-        if (distance <= interactionDistance)
+        if (Vector3.Distance(player.position, transform.position) <= interactionDistance)
         {
-            // Показываем надпись, если игрок рядом
             if (interactionUI != null) interactionUI.SetActive(true);
-
-            // Проверяем нажатие
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                ActivateAltar();
-            }
+            if (Input.GetKeyDown(KeyCode.E)) ActivateAltar();
         }
         else
         {
-            // Прячем надпись, если игрок отошел
             if (interactionUI != null) interactionUI.SetActive(false);
         }
     }
@@ -56,22 +43,28 @@ public class AltarActivation : MonoBehaviour
     void ActivateAltar()
     {
         isActivated = true;
-        
         if (interactionUI != null) interactionUI.SetActive(false);
 
-        if (bossPrefab != null)
+        // 1. СПАВНИМ АРЕНУ ВОКРУГ АЛТАРЯ
+        if (arenaPrefab != null)
         {
-            Instantiate(bossPrefab, spawnPoint.position, Quaternion.identity);
+            // Спавним арену ровно в позиции алтаря
+            GameObject spawnedArena = Instantiate(arenaPrefab, transform.position, Quaternion.identity);
+            
+            // Если ты хочешь, чтобы лазеры исчезли после смерти босса, 
+            // нам нужно передать ссылку на эту арену боссу.
+            // (см. пункт 3 ниже)
         }
 
-        // Эффект активации (красный свет)
+        // 2. СПАВНИМ БОССА
+        if (bossPrefab != null)
+        {
+            Vector3 spawnPos = bossSpawnPoint != null ? bossSpawnPoint.position : transform.position + Vector3.up * 2f;
+            Instantiate(bossPrefab, spawnPos, Quaternion.identity);
+        }
+
+        // Эффект света
         Light altarLight = GetComponentInChildren<Light>();
         if (altarLight != null) altarLight.color = Color.red;
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, interactionDistance);
     }
 }

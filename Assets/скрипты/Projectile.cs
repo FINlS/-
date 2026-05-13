@@ -19,9 +19,14 @@ public class Projectile : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         // Если попали во врага
-        if (other.CompareTag("Enemy"))
+        if (other.CompareTag("Enemy")||other.CompareTag("Boss"))
         {
             Health enemyHealth = other.GetComponent<Health>();
+            BossHealth health = other.GetComponent<BossHealth>();
+            if (health != null)
+            {
+                health.TakeDamage(damage);
+            }
             if (enemyHealth != null)
             {
                 enemyHealth.TakeDamage(damage);

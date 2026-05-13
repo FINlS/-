@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1921614781174354591}
   - component: {fileID: 2990056801902320376}
   - component: {fileID: 8238409971710971783}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: DeadSpruce1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3474906797281602549}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: GameObject (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -181,7 +181,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6140411560606055547, guid: b2ab0294d533d5e4997ea1b6ebcecaf7, type: 3}
       propertyPath: m_Layer
-      value: 7
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 0}

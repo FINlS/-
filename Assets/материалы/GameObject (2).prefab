@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3472663384826502165}
   - component: {fileID: 6459904695806187425}
   - component: {fileID: 9181169648949763242}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: DeadOak2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4241110362393803302}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: GameObject (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -177,7 +177,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4781143097267336916, guid: df73182c01460514ca19ca3f2e5ed349, type: 3}
       propertyPath: m_Layer
-      value: 7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7934534519999015751, guid: df73182c01460514ca19ca3f2e5ed349, type: 3}
       propertyPath: m_Height
