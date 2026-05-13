@@ -1,0 +1,11 @@
+Model Information:
+* title:	The Vendel I Helmet
+* source:	https://sketchfab.com/3d-models/the-vendel-i-helmet-5a810a3e22034e2e89f3fcfe519e0557
+* author:	Historiska (https://sketchfab.com/historiska)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "The Vendel I Helmet" (https://sketchfab.com/3d-models/the-vendel-i-helmet-5a810a3e22034e2e89f3fcfe519e0557) by Historiska (https://sketchfab.com/historiska) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

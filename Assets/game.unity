@@ -7863,6 +7863,37 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &1839800775
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1839800776}
+  m_Layer: 6
+  m_Name: Helmet
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1839800776
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839800775}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7718085989591267794}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1952880163
 GameObject:
   m_ObjectHideFlags: 0
@@ -8864,6 +8895,10 @@ PrefabInstance:
       propertyPath: m_Center.y
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2792973127839041255, guid: a7e5cd51c91f14c43be6b6f219935b95, type: 3}
+      propertyPath: headSocket
+      value: 
+      objectReference: {fileID: 1839800776}
     - target: {fileID: 3554714784147331330, guid: a7e5cd51c91f14c43be6b6f219935b95, type: 3}
       propertyPath: m_Name
       value: Player
@@ -8922,9 +8957,17 @@ PrefabInstance:
       objectReference: {fileID: 1350642223}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4833867822083796178, guid: a7e5cd51c91f14c43be6b6f219935b95, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1839800776}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a7e5cd51c91f14c43be6b6f219935b95, type: 3}
+--- !u!4 &7718085989591267794 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4833867822083796178, guid: a7e5cd51c91f14c43be6b6f219935b95, type: 3}
+  m_PrefabInstance: {fileID: 7718085989591267793}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7929721931885200813
 GameObject:
   m_ObjectHideFlags: 0
