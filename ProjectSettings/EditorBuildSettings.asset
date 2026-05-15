@@ -8,12 +8,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/ShowMenu.unity
     guid: 9c907d4405afc1740bbd8092e6d09170
-  - enabled: 0
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
     path: Assets/game.unity
     guid: 75446d420c6988f4b821d9228dc4f693
+  - enabled: 1
+    path: Assets/Jumper.unity
+    guid: a4259a7031c2ec340a0204139604f27f
+  - enabled: 1
+    path: Assets/LavaWorld.unity
+    guid: 4bffe041dad7e6e4b8956605bf147180
+  - enabled: 1
+    path: Assets/MainMenu.unity
+    guid: 285543fcad7fa9340974a71f2e9603c8
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
