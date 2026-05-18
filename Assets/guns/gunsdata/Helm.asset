@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Helm
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f313428bffd275a4ab59117cec974463, type: 3}
   itemPrefab: {fileID: 6514178307011370189, guid: bd1caa863322b0348af765514b6b10aa, type: 3}
   type: 0
   power: 0

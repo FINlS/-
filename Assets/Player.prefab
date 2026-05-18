@@ -299,7 +299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponController
   currentMode: 0
   uiModeText: {fileID: 0}
-  bulletPrefab: {fileID: 8539407963394225920, guid: 1965162fdedfa9b4bac732a46ca6f464, type: 3}
+  bulletPrefab: {fileID: 3147113984249118754, guid: 24a62394de7eb354282a5441c3a3532a, type: 3}
   firePoint: {fileID: 934214425675427967}
   playerTransform: {fileID: 4056291535496658496}
   fireRate: 0.2
@@ -1517,7 +1517,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponController
   currentMode: 0
   uiModeText: {fileID: 0}
-  bulletPrefab: {fileID: 8539407963394225920, guid: 1965162fdedfa9b4bac732a46ca6f464, type: 3}
+  bulletPrefab: {fileID: 3147113984249118754, guid: 24a62394de7eb354282a5441c3a3532a, type: 3}
   firePoint: {fileID: 6109493195904146822}
   playerTransform: {fileID: 4056291535496658496}
   fireRate: 0.2
@@ -1708,9 +1708,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
-  m_Height: 2
+  m_Height: 4
   m_Direction: 1
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Center: {x: 0, y: 2, z: 0}
 --- !u!54 &40881535924446614
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1767,6 +1767,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 182fcade18049964882a26b3077e7a10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
+  gameOverManager: {fileID: 0}
   maxHealth: 100
   currentHealth: 0
   expGemPrefab: {fileID: 0}

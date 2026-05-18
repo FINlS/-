@@ -5,7 +5,7 @@ public class EnemySpawner : MonoBehaviour
 {
     [Header("Ссылки на объекты")]
     public GameObject enemyPrefab;    // Префаб красного кубика
-    public Transform player;          // Ссылка на трансформ игрока
+    public Transform playe;          // Ссылка на трансформ игрока
     public TextMeshProUGUI timerText; // Ссылка на текстовый объект в Canvas
 
     [Header("Настройки спавна")]
@@ -26,16 +26,16 @@ public class EnemySpawner : MonoBehaviour
         nextSpawnTime = Time.time + currentInterval;
 
         // Если забыл привязать игрока в инспекторе, попробуем найти его по тегу
-        if (player == null)
+        if (playe == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
-            if (p != null) player = p.transform;
+            if (p != null) playe = p.transform;
         }
     }
 
     void Update()
     {
-        if (player == null) return;
+        if (playe == null) return;
 
         // 1. Обновляем время
         gameTimer += Time.deltaTime;
@@ -71,7 +71,7 @@ public class EnemySpawner : MonoBehaviour
     {
         // Генерируем случайную точку на окружности вокруг игрока
         Vector2 randomPoint = Random.insideUnitCircle.normalized * spawnRadius;
-        Vector3 spawnPos = new Vector3(randomPoint.x, 0.5f, randomPoint.y) + player.position;
+        Vector3 spawnPos = new Vector3(randomPoint.x, 0.5f, randomPoint.y) + playe.position;
 
         // Создаем врага
         Instantiate(enemyPrefab, spawnPos, Quaternion.identity);

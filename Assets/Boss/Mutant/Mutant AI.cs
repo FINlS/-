@@ -4,7 +4,7 @@ using System.Collections;
 public class BossAI : MonoBehaviour
 {
     [Header("Ссылки")]
-    public Transform player;
+    public Transform playe;
     public BossHand bossHand; 
     public GameObject jumpIndicator; // Красный круг (предупреждение)
     private Animator anim;
@@ -34,10 +34,10 @@ public class BossAI : MonoBehaviour
         aoe = GetComponent<BossAOE>();
         health = GetComponent<BossHealth>();
         
-        if (player == null)
+        if (playe == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null) player = playerObj.transform;
+            if (playerObj != null) playe = playerObj.transform;
         }
 
         if (jumpIndicator != null) jumpIndicator.SetActive(false);
@@ -66,12 +66,12 @@ public class BossAI : MonoBehaviour
     void Update()
     {
         // Если босс атакует, прыгает или еще в начале АФК — не двигаемся
-        if (player == null || isAttacking) return;
+        if (playe == null || isAttacking || health.currentHealth <=0) return;
 
-        float distance = Vector3.Distance(transform.position, player.position);
+        float distance = Vector3.Distance(transform.position, playe.position);
 
         // Поворот к игроку
-        RotateTowardsTarget(player.position, rotationSpeed);
+        RotateTowardsTarget(playe.position, rotationSpeed);
 
         if (distance > stopDistance)
         {
@@ -130,12 +130,12 @@ public class BossAI : MonoBehaviour
         float aimTimer = 0;
         while (aimTimer < 0.5f)
         {
-            RotateTowardsTarget(player.position, rotationSpeed * 2f);
+            RotateTowardsTarget(playe.position, rotationSpeed * 2f);
             aimTimer += Time.deltaTime;
             yield return null;
         }
 
-        Vector3 targetPoint = player.position;
+        Vector3 targetPoint = playe.position;
         targetPoint.y = transform.position.y; 
 
         // 2. ИНДИКАТОР (фиксируем на земле)

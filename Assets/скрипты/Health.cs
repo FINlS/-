@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class Health : MonoBehaviour
 {
+    [Header("Экран Смерти")]
+    public GameOverManager gameOverManager;
     public float maxHealth = 100f;
     public float currentHealth;
     public GameObject expGemPrefab;
@@ -59,5 +61,9 @@ public class Health : MonoBehaviour
 
         if (expGemPrefab != null) Instantiate(expGemPrefab, transform.position, Quaternion.identity);
         Destroy(gameObject, 3f);
+        if (gameOverManager != null && isPlayer)
+        {
+            gameOverManager.ShowGameOverScreen();
+        }
     }
 }
