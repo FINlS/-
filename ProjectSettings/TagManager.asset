@@ -8,6 +8,7 @@ TagManager:
   - Boss
   - BossArena
   - WallJump
+  - thingAbove
   layers:
   - Default
   - TransparentFX
