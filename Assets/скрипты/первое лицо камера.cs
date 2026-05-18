@@ -11,10 +11,20 @@ public partial class MouseLook : MonoBehaviour
     {
         // Скрываем курсор и блокируем его в центре экрана
         Cursor.lockState = CursorLockMode.Locked;
+
+        // ЗАГРУЗКА НАСТРОЙКИ: Проверяем, сохранял ли игрок чувствительность ранее
+        // Если да — загружаем, если нет — оставляем стандартные 200
+        if (PlayerPrefs.HasKey("MouseSensitivity"))
+        {
+            mouseSensitivity = PlayerPrefs.GetFloat("MouseSensitivity");
+        }
     }
 
     void Update()
     {
+        // Если игра на паузе (активно меню ESC), мышь не должна крутить камеру
+        if (Time.timeScale == 0f) return;
+
         // Получаем ввод мыши
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
