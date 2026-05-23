@@ -10,6 +10,7 @@ public class PauseMenuManager : MonoBehaviour
 
     [Header("Настройки сцены")]
     public string inventorySceneName = "Inventory"; // Имя сцены инвентаря/меню
+    public string NextSceneName = "Next"; // Имя сцены инвентаря/меню
 
     private bool isPaused = false;
 
@@ -113,7 +114,11 @@ public class PauseMenuManager : MonoBehaviour
         Time.timeScale = 1f; // КРИТИЧЕСКИ ВАЖНО: возвращаем время в норму перед сменой сцены!
         SceneManager.LoadScene(inventorySceneName);
     }
-
+    public void GoNext()
+    {
+        Time.timeScale = 1f; // КРИТИЧЕСКИ ВАЖНО: возвращаем время в норму перед сменой сцены!
+        SceneManager.LoadScene(NextSceneName);
+    }
     // Метод для кнопки «Выйти из игры»
     public void QuitGame()
     {

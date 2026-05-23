@@ -4,160 +4,233 @@ using System.Collections;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Компоненты")]
-    public CharacterController controller;
+    private CharacterController controller;
+
+    [Header("Components")]
     public Transform groundCheck;
     public LayerMask groundMask;
 
-    [Header("Настройки движения")]
-    public float speed = 12f;
-    public float gravity = -35f; // Сильная гравитация для четкого управления
-    public float jumpHeight = 2.5f;
-    [Range(0, 1)] public float airControl = 0.6f;
+    [Header("Movement")]
+    public float speed = 11f;
+    public float groundAcceleration = 25f;
+    public float groundDeceleration = 30f;
+    public float airAcceleration = 12f;
 
-    [Header("Прыжки")]
+    [Header("Gravity")]
+    public float gravity = -42f;
+    public float jumpHeight = 2.2f;
+
+    [Header("Jump")]
     public int maxJumps = 2;
-    private int jumpCount;
 
-    [Header("Дэш (Shift)")]
-    public float dashSpeed = 35f;
-    public float dashTime = 0.15f;
+    [Header("Dash")]
+    public float dashSpeed = 30f;
+    public float dashTime = 0.16f;
     public float dashCooldown = 1f;
-    private bool isDashing;
+
+    [Header("Wall")]
+    public float wallCheckDistance = 0.8f;
+    public float wallSlideSpeed = -2.5f;
+    public float wallJumpUpForce = 9f;
+    public float wallJumpPushForce = 12f;
+
+    [Header("Ground")]
+    public float groundRadius = 0.35f;
+
+    private Vector3 moveDir;
+    private Vector3 velocity;
+
+    private bool grounded;
+    private bool dashing;
     private bool canDash = true;
 
-    [Header("Wall Jump (Тег: WallJump)")]
-    public float wallJumpForce = 12f;
-    public float wallJumpUpForce = 10f;
-    public float wallCheckDistance = 0.8f;
+    private int jumps;
 
-    private Vector3 velocity;
-    private bool isGrounded;
-    private Vector3 moveDirection;
     private RaycastHit wallHit;
+    private Vector3 wallNormal;
+
+    void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+    }
 
     void Update()
     {
-        // Если мы в состоянии дэша, пропускаем обычную логику движения
-        if (isDashing) return;
+        GroundCheck();
 
-        // 1. Проверка земли
-        isGrounded = Physics.CheckSphere(groundCheck.position, 0.4f, groundMask);
-
-        if (isGrounded && velocity.y < 0)
+        if (!dashing)
         {
-            velocity.y = -2f; // Прижимаем к земле
-            jumpCount = 0;    // Сбрасываем прыжки
+            Movement();
+            WallSlide();
+            JumpInput();
+            DashInput();
         }
 
-        // 2. Ввод данных
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
-        Vector3 inputMove = transform.right * x + transform.forward * z;
-
-        // 3. Расчет движения (земля vs воздух)
-        if (isGrounded)
-        {
-            moveDirection = inputMove * speed;
-        }
-        else
-        {
-            // Интерполяция для плавного управления в полете
-            moveDirection = Vector3.Lerp(moveDirection, inputMove * speed, airControl * Time.deltaTime);
-        }
-
-        controller.Move(moveDirection * Time.deltaTime);
-
-        // 4. Логика прыжков
-        if (Input.GetButtonDown("Jump"))
-        {
-            if (isGrounded)
-            {
-                Jump(); // Обычный прыжок
-            }
-            else if (TryWallJump())
-            {
-                // Прыжок от стены (DoWallJump уже вызывается внутри TryWallJump)
-                jumpCount = 1; // Позволяем сделать еще один прыжок в воздухе после стены
-            }
-            else if (jumpCount < maxJumps)
-            {
-                Jump(); // Двойной прыжок
-            }
-        }
-
-        // 5. Логика дэша
-        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
-        {
-            StartCoroutine(PerformDash(x, z));
-        }
-
-        // 6. Применение гравитации
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        Gravity();
+        MoveFinal();
     }
 
-    private void Jump()
+    // -------------------------
+    // GROUND
+    // -------------------------
+    void GroundCheck()
+    {
+        grounded = Physics.CheckSphere(groundCheck.position, groundRadius, groundMask);
+
+        if (grounded && velocity.y < 0)
+        {
+            velocity.y = -2f;
+            jumps = 0;
+        }
+    }
+
+    // -------------------------
+    // MOVEMENT (LESS “PLOW” FEEL)
+    // -------------------------
+    void Movement()
+    {
+        float x = Input.GetAxisRaw("Horizontal");
+        float z = Input.GetAxisRaw("Vertical");
+
+        Vector3 input = (transform.right * x + transform.forward * z).normalized;
+        Vector3 target = input * speed;
+
+        float accel = grounded
+            ? (input.magnitude > 0 ? groundAcceleration : groundDeceleration)
+            : airAcceleration;
+
+        moveDir = Vector3.MoveTowards(moveDir, target, accel * Time.deltaTime);
+    }
+
+    // -------------------------
+    // JUMP
+    // -------------------------
+    void JumpInput()
+    {
+        if (!Input.GetButtonDown("Jump")) return;
+
+        if (grounded)
+        {
+            Jump();
+            return;
+        }
+
+        if (TryWallJump()) return;
+
+        if (jumps < maxJumps)
+        {
+            Jump();
+        }
+    }
+
+    void Jump()
     {
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        jumpCount++;
+        jumps++;
     }
 
-    private bool TryWallJump()
+    // -------------------------
+    // WALL SLIDE (SMOOTH BUT NOT STICKY)
+    // -------------------------
+    void WallSlide()
     {
-        // Проверяем направления: вправо, влево, вперед
-        if (CheckDirection(transform.right) || CheckDirection(-transform.right) || CheckDirection(transform.forward))
+        if (grounded) return;
+
+        if (IsWall() && velocity.y < 0)
         {
-            Vector3 wallNormal = wallHit.normal;
-            
-            // Отталкиваемся от нормали стены + придаем импульс вверх
-            moveDirection = wallNormal * wallJumpForce;
-            velocity.y = Mathf.Sqrt(wallJumpUpForce * -2f * gravity);
-            return true;
+            velocity.y = Mathf.MoveTowards(
+                velocity.y,
+                wallSlideSpeed,
+                25f * Time.deltaTime
+            );
         }
-        return false;
     }
 
-    private bool CheckDirection(Vector3 direction)
+    // -------------------------
+    // WALL JUMP
+    // -------------------------
+    bool TryWallJump()
     {
-        if (Physics.Raycast(transform.position, direction, out wallHit, wallCheckDistance))
+        if (!IsWall()) return false;
+
+        moveDir = wallNormal * wallJumpPushForce;
+        velocity.y = Mathf.Sqrt(wallJumpUpForce * -2f * gravity);
+
+        return true;
+    }
+
+    bool IsWall()
+    {
+        Vector3 origin = transform.position + Vector3.up;
+
+        if (Physics.Raycast(origin, transform.right, out wallHit, wallCheckDistance) ||
+            Physics.Raycast(origin, -transform.right, out wallHit, wallCheckDistance) ||
+            Physics.Raycast(origin, transform.forward, out wallHit, wallCheckDistance) ||
+            Physics.Raycast(origin, -transform.forward, out wallHit, wallCheckDistance))
         {
-            // Проверяем, есть ли у стены нужный тег
             if (wallHit.collider.CompareTag("WallJump"))
             {
+                wallNormal = wallHit.normal;
                 return true;
             }
         }
+
         return false;
     }
 
-    private IEnumerator PerformDash(float x, float z)
+    // -------------------------
+    // DASH (LESS BUGGY)
+    // -------------------------
+    void DashInput()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            StartCoroutine(Dash());
+        }
+    }
+
+    IEnumerator Dash()
     {
         canDash = false;
-        isDashing = true;
+        dashing = true;
 
-        // Направление дэша: куда жмем, туда и летим. Если не жмем ничего — летим вперед.
-        Vector3 dashDir = (x == 0 && z == 0) ? transform.forward : (transform.right * x + transform.forward * z).normalized;
+        Vector3 dir = moveDir.magnitude > 0.1f ? moveDir.normalized : transform.forward;
 
-        float startTime = Time.time;
-        while (Time.time < startTime + dashTime)
+        float t = 0;
+
+        while (t < dashTime)
         {
-            controller.Move(dashDir * dashSpeed * Time.deltaTime);
-            velocity.y = 0; // "Замораживаем" падение в момент рывка
+            controller.Move(dir * dashSpeed * Time.deltaTime);
+            velocity.y = 0;
+            t += Time.deltaTime;
             yield return null;
         }
 
-        isDashing = false;
+        dashing = false;
+
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
 
-    // Отрисовка лучей в редакторе для отладки WallJump
-    private void OnDrawGizmosSelected()
+    // -------------------------
+    // GRAVITY
+    // -------------------------
+    void Gravity()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position, transform.right * wallCheckDistance);
-        Gizmos.DrawRay(transform.position, -transform.right * wallCheckDistance);
-        Gizmos.DrawRay(transform.position, transform.forward * wallCheckDistance);
+        if (!grounded || velocity.y > 0)
+        {
+            velocity.y += gravity * Time.deltaTime;
+        }
+    }
+
+    // -------------------------
+    // FINAL MOVE (IMPORTANT FIX)
+    // -------------------------
+    void MoveFinal()
+    {
+        Vector3 final = moveDir;
+        final.y = velocity.y;
+
+        controller.Move(final * Time.deltaTime);
     }
 }

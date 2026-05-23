@@ -17,7 +17,7 @@ public class управление : MonoBehaviour
     private Rigidbody rb;
     private Vector3 moveInput;
     private Animator anim;
-    private bool isGrounded;
+    public bool isGrounded;
 
     void Start()
     {
