@@ -11,6 +11,16 @@ public class BossAI : MonoBehaviour
     private BossAOE aoe;
     private BossHealth health;
 
+    [Header("Аудио")]
+    public AudioSource bossAudioSource; 
+    public AudioClip wakeUpSound;       
+    public AudioClip punchSound;        
+    public AudioClip jumpStartSound;    
+    public AudioClip landSound;         
+
+    public float punchSoundOffset = 0.0f;
+    public float landSoundOffset = 0.0f; // НОВАЯ СТРОКА: отступ для приземления (в секундах)
+
     [Header("Движение")]
     public float speed = 3f;
     public float rotationSpeed = 5f;
@@ -34,6 +44,12 @@ public class BossAI : MonoBehaviour
         aoe = GetComponent<BossAOE>();
         health = GetComponent<BossHealth>();
         
+        // Автоматически ищем AudioSource на боссе, если забыли перетащить в инспекторе
+        if (bossAudioSource == null)
+        {
+            bossAudioSource = GetComponent<AudioSource>();
+        }
+
         if (playe == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -55,6 +71,10 @@ public class BossAI : MonoBehaviour
         if (health != null) health.isInvulnerable = true;
 
         Debug.Log("Босс пробуждается: АФК и Неуязвим...");
+        
+        // ЗВУК: Воспроизводим рык пробуждения
+        PlayBossSound(wakeUpSound, 1f);
+
         yield return new WaitForSeconds(startDelay);
 
         // Выключаем неуязвимость и даем боссу начать бой
@@ -66,7 +86,7 @@ public class BossAI : MonoBehaviour
     void Update()
     {
         // Если босс атакует, прыгает или еще в начале АФК — не двигаемся
-        if (playe == null || isAttacking || health.currentHealth <=0) return;
+        if (playe == null || isAttacking || health.currentHealth <= 0) return;
 
         float distance = Vector3.Distance(transform.position, playe.position);
 
@@ -114,9 +134,25 @@ public class BossAI : MonoBehaviour
     {
         isAttacking = true;
         anim.SetFloat("Speed", 0f);
-        anim.SetTrigger("Punch");
+        anim.SetTrigger("Punch"); // Босс начал анимацию удара
+    
+        // Ждем ровно 1 секунду, пока босс замахивается (рука летит к игроку)
+        yield return new WaitForSeconds(1f);
+
+        // --- ЗАПУСК ЗВУКА ЧЕРЕЗ СЕКУНДУ ПОСЛЕ НАЧАЛА УДАРА ---
+        if (bossAudioSource != null && punchSound != null)
+        {
+            bossAudioSource.clip = punchSound;
+            bossAudioSource.volume = 0.8f;
+            bossAudioSource.Play();
         
-        // Ожидание отката атаки
+            // По-прежнему проматываем стартовую тишину самого аудиофайла, если она там есть
+            bossAudioSource.time = punchSoundOffset; 
+        }
+        // ----------------------------------------------------
+    
+        // Ожидание полного отката атаки перед тем, как босс снова сможет ходить
+        // Если attackCooldown меньше 1 секунды, можно поставить здесь фиксированное время, например 0.5f
         yield return new WaitForSeconds(attackCooldown);
         isAttacking = false;
     }
@@ -143,10 +179,14 @@ public class BossAI : MonoBehaviour
         {
             jumpIndicator.SetActive(true);
             jumpIndicator.transform.position = targetPoint + Vector3.up * 0.05f;
-            jumpIndicator.transform.SetParent(null); // Отвязываем от босса
+            jumpIndicator.transform.SetParent(null); 
         }
 
         anim.SetTrigger("JumpAttack");
+    
+        // Звук подготовки к прыжку (играет нормально через PlayOneShot)
+        PlayBossSound(jumpStartSound, 0.9f);
+
         yield return new WaitForSeconds(0.3f); 
 
         // 3. ПОЛЕТ
@@ -161,16 +201,36 @@ public class BossAI : MonoBehaviour
         if (jumpIndicator != null)
         {
             jumpIndicator.SetActive(false);
-            jumpIndicator.transform.SetParent(this.transform); // Возвращаем в иерархию босса
+            jumpIndicator.transform.SetParent(this.transform); 
         }
 
         if (aoe != null) aoe.Explode();
+    
+        // --- ОСОБЫЙ ЗАПУСК ЗВУКА ПРИЗЕМЛЕНИЯ БЕЗ ТИШИНЫ ---
+        if (bossAudioSource != null && landSound != null)
+        {
+            bossAudioSource.clip = landSound;
+            bossAudioSource.volume = 1f;
+            bossAudioSource.Play();
         
-        nextJumpAllowTime = Time.time + jumpCooldown; // КД на следующий прыжок
+            // Мгновенно проматываем тишину на приземлении!
+            bossAudioSource.time = landSoundOffset; 
+        }
+        // --------------------------------------------------
+    
+        nextJumpAllowTime = Time.time + jumpCooldown; 
         yield return new WaitForSeconds(0.4f); 
 
-        isAttacking = false; // Возвращаемся к бегу
+        isAttacking = false; 
         anim.SetFloat("Speed", 1f); 
+    }
+    // Универсальный внутренний метод для безопасного проигрывания звуков
+    private void PlayBossSound(AudioClip clip, float volume)
+    {
+        if (bossAudioSource != null && clip != null)
+        {
+            bossAudioSource.PlayOneShot(clip, volume);
+        }
     }
 
     // Методы для Animation Events

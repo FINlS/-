@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class управление : MonoBehaviour
+public class управление : Sounds
 {
     [Header("Основные настройки")]
     public float moveSpeed = 5f;
@@ -19,36 +19,105 @@ public class управление : MonoBehaviour
     private Animator anim;
     private bool isGrounded;
 
+    [Header("Настройки звука стрельбы")]
+    public AudioSource weaponAudioSource;
+    public float fadeSpeed = 5f;        
+    private float maxVolume;            
+    public float timeToCutFromEnd = 0.3f;
+
+    [Header("Настройки звука шагов")]
+    public float footstepDelay = 0.4f;   // Как часто будут звучать шаги (чем меньше, тем быстрее)
+    private float nextStepTime = 0f;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        anim = GetComponentInChildren<Animator>(); //
+        anim = GetComponentInChildren<Animator>(); 
         
-        // Блокируем вращение, чтобы персонаж не падал при прыжках
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        if (weaponAudioSource != null)
+        {
+            maxVolume = weaponAudioSource.volume;
+        }
     }
 
     void Update()
     {
-        if (isDashing) return;
-
-        float x = Input.GetAxisRaw("Horizontal");
-        float z = Input.GetAxisRaw("Vertical");
-        moveInput = new Vector3(x, 0f, z).normalized;
-
-        // Передаем скорость для базовой анимации бега
-        anim.SetFloat("Speed", moveInput.magnitude);
-
-        // Прыжок
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        // Убрали жесткий return, чтобы если weaponAudioSource временно равен null, 
+        // персонаж всё равно мог ходить, прыгать и воспроизводить шаги.
+        
+        if (!isDashing)
         {
-            Jump();
-        }
+            // --- ЛОГИКА СТРЕЛЬБЫ ---
+            if (weaponAudioSource != null)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    weaponAudioSource.Stop();   
+                    weaponAudioSource.volume = maxVolume; 
+                    weaponAudioSource.Play();   
+                }
 
-        // Дэш
-        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
-        {
-            StartCoroutine(Dash());
+                if (Input.GetMouseButton(0))
+                {
+                    if (!weaponAudioSource.isPlaying)
+                    {
+                        weaponAudioSource.Play();
+                    }
+
+                    if (weaponAudioSource.time >= (weaponAudioSource.clip.length - timeToCutFromEnd))
+                    {
+                        weaponAudioSource.time = 0f; 
+                    }
+
+                    weaponAudioSource.volume = maxVolume; 
+                }
+                else
+                {
+                    if (weaponAudioSource.isPlaying)
+                    {
+                        weaponAudioSource.volume = Mathf.MoveTowards(weaponAudioSource.volume, 0f, fadeSpeed * Time.deltaTime);
+
+                        if (weaponAudioSource.volume <= 0f)
+                        {
+                            weaponAudioSource.Stop();
+                        }
+                    }
+                }
+            }
+
+            // --- ЛОГИКА ДВИЖЕНИЯ ---
+            float x = Input.GetAxisRaw("Horizontal");
+            float z = Input.GetAxisRaw("Vertical");
+            moveInput = new Vector3(x, 0f, z).normalized;
+
+            anim.SetFloat("Speed", moveInput.magnitude);
+
+            // --- ЛОГИКА ШАГОВ ---
+            // Проверяем: персонаж жмет кнопки движения, он на земле и пришло время для шага
+            if (moveInput.magnitude > 0 && isGrounded && Time.time >= nextStepTime)
+            {
+                // Проверяем, добавил ли ты второй элемент в массив sounds в Инспекторе
+                if (sounds != null && sounds.Length > 1 && sounds[1] != null)
+                {
+                    // Играем sound[1] (звук шага) через встроенную систему Sounds
+                    PlaySound(sounds[1], 0.3f, false, 0.9f, 1.1f); 
+                    
+                    nextStepTime = Time.time + footstepDelay;
+                }
+            }
+
+            // Прыжок
+            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            {
+                Jump();
+            }
+
+            // Дэш
+            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+            {
+                StartCoroutine(Dash());
+            }
         }
     }
 
@@ -56,16 +125,17 @@ public class управление : MonoBehaviour
     {
         if (isDashing) return;
 
-        rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime); //
-        
-        // Проверка приземления
+        rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime); 
         isGrounded = Physics.Raycast(transform.position, Vector3.down, 1.1f);
     }
 
     void Jump()
     {
-        // Запускаем анимацию прыжка
         anim.SetTrigger("Jump");
+        if (sounds != null && sounds.Length > 0)
+        {
+            PlaySound(sounds[0], 0.2f); // Звук прыжка (элемент 0)
+        }
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }
 
@@ -74,10 +144,8 @@ public class управление : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        // Запускаем анимацию дэша
         anim.SetTrigger("Dash");
         
-        // Включаем "неуязвимость" через слой (убедись, что слой создан)
         int oldLayer = gameObject.layer;
         gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
 
@@ -86,7 +154,6 @@ public class управление : MonoBehaviour
 
         yield return new WaitForSeconds(dashDuration);
 
-        // Возвращаем управление и слой
         gameObject.layer = oldLayer;
         isDashing = false;
         rb.linearVelocity = Vector3.zero;

@@ -108,3 +108,6 @@ MonoBehaviour:
   spawnHeight: 12
   damageRadius: 5
   damageAmount: 20
+  spawnSound: {fileID: 0}
+  explosionSound: {fileID: 8300000, guid: 86a2baaff2b8b4d6485d65c241b1f361, type: 3}
+  soundVolume: 0.111

@@ -9,12 +9,24 @@ public class DangerZone : MonoBehaviour
     public float damageRadius = 2.0f;    // Радиус взрыва/урона камня
     public int damageAmount = 20;       // Сколько урона наносит
 
+    [Header("Настройки Звуков")]
+    public AudioClip spawnSound;        // Звук предупреждения/свиста (опасность!)
+    public AudioClip explosionSound;    // Звук бабаха при приземлении камня
+    [Range(0f, 1f)] public float soundVolume = 0.8f; // Общая громкость звуков метеора
+
     private float timer;
     private bool rockDropped = false;
 
     void Start()
     {
         timer = delayBeforeDrop;
+
+        // ЗВУК: Как только зона появилась, сразу включаем свист подлетающего метеора
+        if (spawnSound != null)
+        {
+            // Спавним 3D звук прямо в точке этой красной зоны
+            AudioSource.PlayClipAtPoint(spawnSound, transform.position, soundVolume);
+        }
     }
 
     void Update()
@@ -31,42 +43,60 @@ public class DangerZone : MonoBehaviour
     {
         rockDropped = true;
 
-        // Позиция спавна камня — строго над центром красной зоны
         Vector3 spawnPos = new Vector3(transform.position.x, transform.position.y + spawnHeight, transform.position.z);
         
-        // Создаем камень
         if (rockPrefab != null)
         {
             GameObject rock = Instantiate(rockPrefab, spawnPos, Quaternion.identity);
             
-            // Заставляем камень нанести урон, когда он долетит (или прямо сейчас, если это "взрывной" урон по зоне)
-            // Давай сделаем честный урон по площади в момент падения:
-            Invoke("DealDamage", 0.3f); // Примерное время подлета (можно настроить)
+            // Invoke вызовет DealDamage через 0.3 секунды, там же включится и взрыв
+            Invoke("DealDamage", 0.3f); 
             
-            Destroy(rock, 3f); // Уничтожаем камень, чтобы не лагало
+            Destroy(rock, 3f); 
         }
 
-        // Удаляем саму красную зону
+        // Саму зону удаляем чуть позже, чтобы Invoke успел сработать от ее позиции
         Destroy(gameObject, 0.4f);
     }
 
     void DealDamage()
     {
-        // Ищем всех, кто попал в зону поражения
+        // ЗВУК: Камень долетел, наносим урон и включаем БАБАХ!
+        if (explosionSound != null)
+        {
+            // 1. Создаем пустой объект для звука в точке взрыва
+            GameObject tempAudioObj = new GameObject("TempExplosionAudio");
+            tempAudioObj.transform.position = transform.position;
+
+            // 2. Добавляем на него AudioSource и настраиваем на максимальную громкость
+            AudioSource aSource = tempAudioObj.AddComponent<AudioSource>();
+            aSource.clip = explosionSound;
+        
+            // Увеличиваем громкость (можешь поставить 1.5f или 2f, если файл сам по себе тихий!)
+            aSource.volume = soundVolume * 1.5f; 
+
+            // ИСПРАВЛЕНИЕ ТИШИНЫ: Сдвигаем ползунок в 2D (0), чтобы расстояние до камеры не глушило взрыв
+            aSource.spatialBlend = 0f; 
+
+            // 3. Запускаем воспроизведение
+            aSource.Play();
+
+            // 4. Удаляем этот объект со сцены ровно после того, как звук доиграет до конца
+            Destroy(tempAudioObj, explosionSound.length);
+        }
+
+        // Твоя стандартная логика урона (осталась без изменений)
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, damageRadius);
         foreach (var hitCollider in hitColliders)
         {
             if (hitCollider.CompareTag("Player"))
             {
-                // Предполагаем, что у игрока есть скрипт здоровья (PlayerStats или PlayerHealth)
-                // Сделай под свою систему, например:
                 hitCollider.GetComponent<Health>().TakeDamage(damageAmount);
                 Debug.Log($"Игрок получил {damageAmount} урона от камня!");
             }
         }
     }
 
-    // Рисуем радиус урона в редакторе
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.orange;

@@ -31,70 +31,142 @@ public class PlayerMovement : MonoBehaviour
     public float wallJumpUpForce = 10f;
     public float wallCheckDistance = 0.8f;
 
+    // --- НАСТРОЙКИ АУДИО ---
+    [Header("Аудио: Стрельба")]
+    public AudioSource weaponAudioSource;
+    public float weaponFadeSpeed = 5f;        
+    public float timeToCutFromEnd = 0.3f;
+    private float maxWeaponVolume;
+
+    [Header("Аудио: Движение")]
+    public AudioSource movementAudioSource; // Отдельный источник для шагов/прыжков
+    public AudioClip footstepSound;
+    public AudioClip jumpSound;
+    public AudioClip wallJumpSound;
+    public float footstepDelay = 0.4f;
+    private float nextStepTime = 0f;
+    // -----------------------
+
     private Vector3 velocity;
     private bool isGrounded;
     private Vector3 moveDirection;
     private RaycastHit wallHit;
 
+    void Start()
+    {
+        // Если забыл прикрепить контроллер вручную
+        if (controller == null) controller = GetComponent<CharacterController>();
+
+        // Запоминаем громкость автомата
+        if (weaponAudioSource != null)
+        {
+            maxWeaponVolume = weaponAudioSource.volume;
+        }
+    }
+
     void Update()
     {
-        // Если мы в состоянии дэша, пропускаем обычную логику движения
-        if (isDashing) return;
-
-        // 1. Проверка земли
-        isGrounded = Physics.CheckSphere(groundCheck.position, 0.4f, groundMask);
-
-        if (isGrounded && velocity.y < 0)
+        // Разделяем логику: даже если weaponAudioSource не назначен, ходить и прыгать персонаж обязан
+        if (!isDashing)
         {
-            velocity.y = -2f; // Прижимаем к земле
-            jumpCount = 0;    // Сбрасываем прыжки
-        }
+            // 1. ЛОГИКА ЗВУКА СТРЕЛЬБЫ
+            if (weaponAudioSource != null)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    weaponAudioSource.Stop();   
+                    weaponAudioSource.volume = maxWeaponVolume; 
+                    weaponAudioSource.Play();   
+                }
 
-        // 2. Ввод данных
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
-        Vector3 inputMove = transform.right * x + transform.forward * z;
+                if (Input.GetMouseButton(0))
+                {
+                    if (!weaponAudioSource.isPlaying) weaponAudioSource.Play();
 
-        // 3. Расчет движения (земля vs воздух)
-        if (isGrounded)
-        {
-            moveDirection = inputMove * speed;
-        }
-        else
-        {
-            // Интерполяция для плавного управления в полете
-            moveDirection = Vector3.Lerp(moveDirection, inputMove * speed, airControl * Time.deltaTime);
-        }
+                    if (weaponAudioSource.time >= (weaponAudioSource.clip.length - timeToCutFromEnd))
+                    {
+                        weaponAudioSource.time = 0f; 
+                    }
+                    weaponAudioSource.volume = maxWeaponVolume; 
+                }
+                else
+                {
+                    if (weaponAudioSource.isPlaying)
+                    {
+                        weaponAudioSource.volume = Mathf.MoveTowards(weaponAudioSource.volume, 0f, weaponFadeSpeed * Time.deltaTime);
+                        if (weaponAudioSource.volume <= 0f) weaponAudioSource.Stop();
+                    }
+                }
+            }
 
-        controller.Move(moveDirection * Time.deltaTime);
+            // 2. Проверка земли
+            isGrounded = Physics.CheckSphere(groundCheck.position, 0.4f, groundMask);
 
-        // 4. Логика прыжков
-        if (Input.GetButtonDown("Jump"))
-        {
+            if (isGrounded && velocity.y < 0)
+            {
+                velocity.y = -2f; // Прижимаем к земле
+                jumpCount = 0;    // Сбрасываем прыжки
+            }
+
+            // 3. Ввод данных
+            float x = Input.GetAxis("Horizontal");
+            float z = Input.GetAxis("Vertical");
+            Vector3 inputMove = transform.right * x + transform.forward * z;
+
+            // 4. Расчет движения (земля vs воздух)
             if (isGrounded)
             {
-                Jump(); // Обычный прыжок
+                moveDirection = inputMove * speed;
+
+                // --- ЛОГИКА ШАГОВ ---
+                // Если жмем кнопки WASD и пришло время шага
+                if (inputMove.magnitude > 0.1f && Time.time >= nextStepTime)
+                {
+                    PlayMovementSound(footstepSound, 0.4f);
+                    nextStepTime = Time.time + footstepDelay;
+                }
             }
-            else if (TryWallJump())
+            else
             {
-                // Прыжок от стены (DoWallJump уже вызывается внутри TryWallJump)
-                jumpCount = 1; // Позволяем сделать еще один прыжок в воздухе после стены
+                // Интерполяция для плавного управления в полете
+                moveDirection = Vector3.Lerp(moveDirection, inputMove * speed, airControl * Time.deltaTime);
             }
-            else if (jumpCount < maxJumps)
+
+            controller.Move(moveDirection * Time.deltaTime);
+
+            // 5. Логика прыжков
+            if (Input.GetButtonDown("Jump"))
             {
-                Jump(); // Двойной прыжок
+                if (isGrounded)
+                {
+                    Jump(); // Обычный прыжок
+                    PlayMovementSound(jumpSound, 0.6f);
+                }
+                else if (TryWallJump())
+                {
+                    jumpCount = 1; // Позволяем сделать еще один прыжок после стены
+                    PlayMovementSound(wallJumpSound, 0.7f);
+                }
+                else if (jumpCount < maxJumps)
+                {
+                    Jump(); // Двойной прыжок
+                    PlayMovementSound(jumpSound, 0.5f); // Чуть тише для второго прыжка
+                }
+            }
+
+            // 6. Логика дэша
+            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+            {
+                StartCoroutine(PerformDash(x, z));
             }
         }
 
-        // 5. Логика дэша
-        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        // Применение гравитации (работает всегда, кроме активного дэша)
+        if (!isDashing)
         {
-            StartCoroutine(PerformDash(x, z));
+            velocity.y += gravity * Time.deltaTime;
+            controller.Move(velocity * Time.deltaTime);
         }
-
-        // 6. Применение гравитации
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
     }
 
     private void Jump()
@@ -105,12 +177,9 @@ public class PlayerMovement : MonoBehaviour
 
     private bool TryWallJump()
     {
-        // Проверяем направления: вправо, влево, вперед
         if (CheckDirection(transform.right) || CheckDirection(-transform.right) || CheckDirection(transform.forward))
         {
             Vector3 wallNormal = wallHit.normal;
-            
-            // Отталкиваемся от нормали стены + придаем импульс вверх
             moveDirection = wallNormal * wallJumpForce;
             velocity.y = Mathf.Sqrt(wallJumpUpForce * -2f * gravity);
             return true;
@@ -122,7 +191,6 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Physics.Raycast(transform.position, direction, out wallHit, wallCheckDistance))
         {
-            // Проверяем, есть ли у стены нужный тег
             if (wallHit.collider.CompareTag("WallJump"))
             {
                 return true;
@@ -136,14 +204,13 @@ public class PlayerMovement : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        // Направление дэша: куда жмем, туда и летим. Если не жмем ничего — летим вперед.
         Vector3 dashDir = (x == 0 && z == 0) ? transform.forward : (transform.right * x + transform.forward * z).normalized;
 
         float startTime = Time.time;
         while (Time.time < startTime + dashTime)
         {
             controller.Move(dashDir * dashSpeed * Time.deltaTime);
-            velocity.y = 0; // "Замораживаем" падение в момент рывка
+            velocity.y = 0; 
             yield return null;
         }
 
@@ -152,7 +219,15 @@ public class PlayerMovement : MonoBehaviour
         canDash = true;
     }
 
-    // Отрисовка лучей в редакторе для отладки WallJump
+    // Вспомогательный метод для непересекающихся звуков шагов и прыжков
+    private void PlayMovementSound(AudioClip clip, float volume)
+    {
+        if (movementAudioSource != null && clip != null)
+        {
+            movementAudioSource.PlayOneShot(clip, volume);
+        }
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
